@@ -30,6 +30,8 @@ DavaDesk brings an animated companion to your desktop. Click to open the assista
 
 ## Download and install
 
+[**Download Windows & Linux / Yuklab olish →**](https://github.com/Muqimovdavronbek/DavaDesk/releases/tag/v1.5.0)
+
 Release packages belong under this repository’s **Releases** section. Choose the complete asset, rather than GitHub’s automatically generated source archive, when you want the Windows executable.
 
 | System | Package | Start here |

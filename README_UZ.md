@@ -6,6 +6,8 @@
 
 ## Yuklash va o‘rnatish
 
+[**Download Windows & Linux / Yuklab olish →**](https://github.com/Muqimovdavronbek/DavaDesk/releases/tag/v1.5.0)
+
 | Tizim | Fayl | Boshlash |
 | --- | --- | --- |
 | Windows 10/11 x64 | DavaDesk_Windows_x64_v1.5.0.zip | Extract All → DavaDesk.exe. Node.js kerak emas. |
