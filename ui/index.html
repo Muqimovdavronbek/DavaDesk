@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; object-src 'none'; frame-src 'none'">
+  <title>DavaDesk</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-expanded="false" data-busy="false">
+  <svg class="svg-defs" aria-hidden="true"><defs>
+    <linearGradient id="pet-fill" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d5ffee"/><stop offset="1" stop-color="#64dcb2"/></linearGradient>
+    <symbol id="pet" viewBox="0 0 100 100">
+      <g class="pet-body">
+        <path d="M50 24 Q49 12 63 11" fill="none" stroke="#91f4cb" stroke-width="4" stroke-linecap="round"/>
+        <circle class="antenna" cx="66" cy="10" r="5" fill="#effff5"/>
+        <path d="M25 30 C34 20 66 20 77 32 C85 42 88 66 77 78 C66 91 32 89 21 74 C13 61 15 41 25 30Z" fill="url(#pet-fill)"/>
+        <path d="M22 43 Q27 29 39 29" fill="none" stroke="#eefff8" stroke-width="3" stroke-linecap="round" opacity=".65"/>
+        <g class="eyes"><ellipse cx="38" cy="54" rx="4.5" ry="7" fill="#123e35"/><ellipse cx="63" cy="54" rx="4.5" ry="7" fill="#123e35"/>
+          <circle cx="39" cy="52" r="1.3" fill="white"/><circle cx="64" cy="52" r="1.3" fill="white"/></g>
+        <path d="M46 66 Q50 70 55 66" fill="none" stroke="#245b4c" stroke-width="2.4" stroke-linecap="round"/>
+        <ellipse cx="27" cy="63" rx="5" ry="3" fill="#f3a9bb" opacity=".65"/><ellipse cx="75" cy="63" rx="5" ry="3" fill="#f3a9bb" opacity=".65"/>
+      </g>
+    </symbol>
+    <symbol id="chat-icon" viewBox="0 0 24 24"><path d="M20 11.5a8 8 0 0 1-8 8H5l-3 2V11.5a9 9 0 0 1 18 0Z"/><path d="M7 9h8M7 13h5"/></symbol>
+    <symbol id="task-icon" viewBox="0 0 24 24"><path d="m4 7 2 2 4-4M13 7h7M4 15l2 2 4-4M13 15h7"/></symbol>
+    <symbol id="home-icon" viewBox="0 0 24 24"><path d="m3 10 9-7 9 7M5 9v12h14V9M9 21v-7h6v7"/></symbol>
+    <symbol id="settings-icon" viewBox="0 0 24 24"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M6 6l2 2M16 16l2 2M6 18l2-2M16 8l2-2"/><circle cx="12" cy="12" r="5"/></symbol>
+    <symbol id="arrow-icon" viewBox="0 0 24 24"><path d="M4 12h16m-6-6 6 6-6 6"/></symbol>
+    <symbol id="link-icon" viewBox="0 0 24 24"><path d="M14 3h7v7M21 3l-9 9M10 4H4v16h16v-6"/></symbol>
+  </defs></svg>
+
+  <div id="dock" class="dock" role="button" tabindex="0" aria-label="DavaDesk yordamchisini ochish">
+    <svg class="mascot dock-pet" aria-hidden="true"><use href="#pet"/></svg>
+    <div class="dock-name"><strong>DavaDesk</strong><span id="dock-status">ChatGPT yoningizda</span></div>
+    <span class="live-dot"></span><span class="dock-grip" title="Oynani surish">⠿</span>
+  </div>
+
+  <div id="shell" class="shell">
+    <header class="header">
+      <div class="brand"><svg class="mascot small-pet" aria-hidden="true"><use href="#pet"/></svg><strong>DavaDesk</strong><span class="tag">Sizning yordamchingiz</span></div>
+      <div class="window-controls">
+        <button id="header-browser" class="icon-button" title="ChatGPT’ni brauzerda ochish" aria-label="Brauzerda ochish"><svg><use href="#link-icon"/></svg></button>
+        <button id="minimize" class="icon-button" title="Yig‘ish (Ctrl+Alt+Space)" aria-label="Kichik holatga yig‘ish">−</button>
+        <button id="close" class="icon-button" title="Kichik holatga yig‘ish" aria-label="Kichik holatga yig‘ish">×</button>
+      </div>
+    </header>
+    <div class="workspace-layout">
+      <aside class="sidebar">
+        <span class="nav-label">YONINGIZDA</span>
+        <nav aria-label="Sahifalar">
+          <button class="nav-button active" data-tab="home"><svg><use href="#home-icon"/></svg><span>Bosh sahifa</span></button>
+          <button class="nav-button" data-tab="chat"><svg><use href="#chat-icon"/></svg><span>AI xizmatlari</span></button>
+          <button class="nav-button" data-tab="tasks"><svg><use href="#task-icon"/></svg><span>Vazifalar</span><i id="task-dot" hidden></i></button>
+          <button class="nav-button" data-tab="settings"><svg><use href="#settings-icon"/></svg><span>Sozlamalar</span></button>
+        </nav>
+        <div class="sidebar-bottom"><div class="tiny-dot"></div><div><strong>O‘z akkauntingiz</strong><span>API kalitisiz</span></div></div>
+      </aside>
+
+      <main class="content">
+        <section class="page home-page" id="page-home">
+          <form id="welcome-form" class="welcome-card" hidden>
+            <h2>DavaDesk’ga xush kelibsiz!</h2>
+            <p>Sizga qanday murojaat qilay?</p>
+            <div class="name-row"><input id="welcome-name" maxlength="60" autocomplete="given-name" placeholder="Ismingiz" aria-label="Ismingiz" required><button class="primary-button" type="submit">Boshlash</button></div>
+            <p>Ismingiz shu kompyuterda saqlanadi. Keyin sozlamalarda o‘zgartirasiz.</p>
+          </form>
+          <div class="eyebrow"><span class="tiny-dot"></span> ISH STOLINGIZDA BIR HAMROH</div>
+          <div class="hero">
+            <div><h1><span id="greeting">Salom!</span><br><span>Birga nima qilamiz?</span></h1><p>Suhbatlashing, savol bering yoki fayllaringiz ustida vazifa topshiring. Men shu yerdaman.</p></div>
+            <div class="pet-stage"><div class="pet-glow"></div><svg class="mascot hero-pet" aria-label="Dava yordamchi"><use href="#pet"/></svg><span class="pet-caption">Dava sizni kutyapti</span></div>
+          </div>
+          <button id="start-chat" class="chat-card"><div class="card-icon"><svg><use href="#chat-icon"/></svg></div><div><strong>AI yordamchini tanlash</strong><span>O‘z suhbatlaringiz, fayllar va akkauntingiz.</span></div><svg class="card-arrow"><use href="#arrow-icon"/></svg></button>
+          <div class="home-grid">
+            <button id="start-task" class="feature-card"><div class="feature-heading"><svg><use href="#task-icon"/></svg><span>VAZIFA TOPSHIRISH</span></div><h2>Ishni menga topshiring.</h2><p>Kod yozish, xatoni tuzatish, fayllarni tayyorlash.</p><span class="text-link">Vazifani boshlash <b>↗</b></span></button>
+            <div class="feature-card note-card"><span class="feature-heading">SIZGA YAQIN</span><h2>Bir bosishda ochiladi.</h2><p>Yordamchini istalgan burchakka suring. Ishingiz tugaguncha yoningizda.</p><div class="keycaps"><kbd>Ctrl</kbd><span>+</span><kbd>Alt</kbd><span>+</span><kbd>Space</kbd></div></div>
+          </div>
+          <div class="home-status"><span class="tiny-dot"></span><span id="home-auth">ChatGPT’ga kirib boshlang.</span><button id="home-connect">Ulash →</button></div>
+        </section>
+
+        <section class="page chat-page" id="page-chat" hidden>
+          <div class="page-title-row"><div><label for="provider">AI xizmatini tanlang</label><select id="provider" aria-label="AI xizmatini tanlang"></select><p id="web-status">O‘z akkauntingiz bilan suhbat.</p></div><div class="toolbar"><button id="pick-ai-files" class="small-button">📎 Fayl</button><button id="new-chat" class="small-button">+ Yangi</button><button id="reload-chat" class="small-button" aria-label="Saytni yangilash">↻</button><button id="chat-browser" class="small-button">Brauzerda ↗</button></div></div>
+          <div id="upload-banner" class="upload-banner" hidden role="status"><div><strong id="upload-names"></strong><p id="upload-message"></p></div><button id="upload-retry" class="small-button" hidden>Qayta urinish</button><button id="upload-cancel" class="small-button" hidden>Bekor qilish</button><button id="upload-dismiss" class="small-button" hidden>×</button></div>
+          <div class="web-container" id="web-container"><div class="web-placeholder"><svg class="mascot" aria-hidden="true"><use href="#pet"/></svg><h3>Tanlangan AI shu yerda ochiladi.</h3><p>Akkauntingizga saytning o‘zida kiring.</p></div></div>
+          <div class="web-help">Kirish yoki tekshiruv ochilmasa, <button id="browser-fallback">brauzerda davom eting</button>. Har bir xizmatga birinchi kirish alohida; keyin sessiya saqlanadi.</div>
+        </section>
+
+        <section class="page tasks-page" id="page-tasks" hidden>
+          <div class="page-title-row"><div><h2>Vazifalar</h2><p>ChatGPT akkauntingizga ulangan Codex bilan.</p></div><button id="check-login" class="small-button">↻ Tekshirish</button></div>
+          <div class="connection-card" id="connection-card"><div><span class="connection-dot"></span><strong id="connection-title">ChatGPT bilan kirish</strong><p id="connection-detail">Vazifa bajarish uchun akkauntingizni ulang.</p></div><button id="login" class="primary-button">ChatGPT bilan kirish ↗</button></div>
+          <div class="folder-row"><div><span class="field-label">ISH PAPKASI</span><span id="workspace-path" class="folder-path"></span></div><button id="choose-folder" class="small-button">Tanlash</button><button id="open-folder" class="small-button" aria-label="Ish papkasini ochish">↗</button></div>
+          <label class="permission-row" for="permission"><span>Fayllar bilan ishlash</span><select id="permission"><option value="read-only">Faqat o‘qish va maslahat</option><option value="workspace-write">Tanlangan papkada yaratish / tahrirlash</option></select></label>
+          <div id="task-log" class="task-log" role="log" aria-live="polite" aria-label="Vazifa jarayoni"><div class="empty-log"><svg><use href="#task-icon"/></svg><strong>Birinchi vazifangizni yozing.</strong><span>Masalan: “Shu papkadagi Flutter loyihasini tekshir.”</span></div></div>
+          <div class="attachment-box"><button id="pick-files" class="small-button">📎 Fayl qo‘shish</button><span>Yoki faylni yordamchi ustiga tashlang</span><div id="attachments"></div></div><div class="composer"><textarea id="prompt" rows="3" maxlength="24000" aria-label="Vazifa matni" placeholder="Nima qilishimni yozing… Ctrl+Enter bilan yuborish"></textarea><div class="composer-bottom"><span id="task-status">Har bir vazifa alohida boshlanadi.</span><div><button id="copy-answer" class="small-button" hidden>Javobni nusxalash</button><button id="stop" class="stop-button" hidden>■ To‘xtatish</button><button id="run" class="primary-button">Boshlash ↑</button></div></div></div>
+        </section>
+
+        <section class="page settings-page" id="page-settings" hidden>
+          <div class="page-title-row"><div><h2>Sozlamalar</h2><p>Yordamchini o‘zingizga moslang.</p></div><span class="version" id="app-version">v1.5.0</span></div>
+          <div class="settings-group"><h3>Profil</h3><form id="profile-form"><label for="profile-name">Ismingiz</label><div class="name-row"><input id="profile-name" maxlength="60" autocomplete="given-name" placeholder="Ismingiz" required><button class="primary-button" type="submit">Saqlash</button></div><p id="profile-feedback" role="status"></p></form></div>
+          <div class="settings-group"><h3>Ish stoli</h3><label class="setting-row"><div><strong>Doim tepada turish</strong><p>Boshqa oynalar ustida ko‘rinsin.</p><p id="workspace-status"></p></div><input type="checkbox" id="pin" role="switch"></label><label class="setting-row"><div><strong>Kompyuter bilan ishga tushish</strong><p>Akkauntingizga kirganingizda yordamchi ochilsin.</p></div><input type="checkbox" id="autostart" role="switch"></label><div class="setting-row"><div><strong>Tezkor tugma</strong><p id="shortcut-info">Ctrl + Alt + Space</p></div><kbd>⌨</kbd></div></div>
+          <div class="settings-group"><h3>AI akkauntlari</h3><div class="setting-row"><div><strong>Rasmiy ChatGPT ilovasi</strong><p>O‘rnatilgan bo‘lsa ochadi, aks holda yuklash sahifasi.</p></div><button id="official-app" class="small-button">Ochish ↗</button></div><div class="setting-row"><div><strong>Saytdagi sessiyadan chiqish</strong><p>Tanlangan AI xizmatidagi kirishni tozalaydi.</p></div><button id="clear-session" class="small-button">Chiqish</button></div></div>
+          <div class="about"><svg class="mascot" aria-hidden="true"><use href="#pet"/></svg><div><strong>DavaDesk</strong><p>Siz uchun tayyorlangan ish stoli yordamchisi.<br>ChatGPT rejasi va akkauntingizdagi imkoniyatlardan foydalanadi.</p><span>Mustaqil dastur. Rasmiy OpenAI ilovasi emas.</span></div></div>
+          <button id="quit" class="quit-button">DavaDesk’dan chiqish</button>
+        </section>
+      </main>
+    </div>
+    <footer class="footer"><span><i class="tiny-dot"></i><span id="footer-state">Yordamchingiz shu yerda.</span></span><span><span id="platform-label">Ish stoli uchun · API kalitisiz</span></span></footer>
+  </div>
+  <div id="toast" class="toast" role="status" hidden></div>
+  <script src="app.js"></script>
+</body>
+</html>

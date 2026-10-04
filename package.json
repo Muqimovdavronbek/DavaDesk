@@ -1,0 +1,23 @@
+{
+  "name": "davadesk",
+  "version": "1.5.0",
+  "private": true,
+  "description": "Floating Windows and Linux assistant with 11 AI services",
+  "main": "main.cjs",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test tests/*.test.cjs",
+    "login": "codex -c 'forced_login_method=\"chatgpt\"' login",
+    "check": "node --check main.cjs && node --check preload.cjs && node --check ui/app.js && node --check lib/core.cjs && node --check lib/codex.cjs && node --check lib/upload.cjs && node --check lib/window-behavior.cjs"
+  },
+  "dependencies": {
+    "@openai/codex": "latest"
+  },
+  "devDependencies": {
+    "electron": "latest"
+  },
+  "license": "MIT"
+}
