@@ -41,6 +41,7 @@
       <div class="brand"><svg class="mascot small-pet" aria-hidden="true"><use href="#pet"/></svg><strong>DavaDesk</strong><span class="tag">Sizning yordamchingiz</span></div>
       <div class="window-controls">
         <button id="header-browser" class="icon-button" title="ChatGPT’ni brauzerda ochish" aria-label="Brauzerda ochish"><svg><use href="#link-icon"/></svg></button>
+        <button id="panel-size" class="icon-button" title="Kattalashtirish / oldingi o‘lcham" aria-label="Oynani kattalashtirish">□</button>
         <button id="minimize" class="icon-button" title="Yig‘ish (Ctrl+Alt+Space)" aria-label="Kichik holatga yig‘ish">−</button>
         <button id="close" class="icon-button" title="Kichik holatga yig‘ish" aria-label="Kichik holatga yig‘ish">×</button>
       </div>
@@ -79,7 +80,7 @@
         </section>
 
         <section class="page chat-page" id="page-chat" hidden>
-          <div class="page-title-row"><div><label for="provider">AI xizmatini tanlang</label><select id="provider" aria-label="AI xizmatini tanlang"></select><p id="web-status">O‘z akkauntingiz bilan suhbat.</p></div><div class="toolbar"><button id="pick-ai-files" class="small-button">📎 Fayl</button><button id="new-chat" class="small-button">+ Yangi</button><button id="reload-chat" class="small-button" aria-label="Saytni yangilash">↻</button><button id="chat-browser" class="small-button">Brauzerda ↗</button></div></div>
+          <div class="page-title-row"><div><label for="provider">AI xizmatini tanlang</label><select id="provider" aria-label="AI xizmatini tanlang"></select><p id="web-status">O‘z akkauntingiz bilan suhbat.</p></div><div class="toolbar"><button id="paste" class="small-button" title="Nusxalangan rasm yoki faylni qo‘yish (Ctrl+V)">📋 Qo‘yish</button><button id="pick-ai-files" class="small-button">📎 Fayl</button><button id="new-chat" class="small-button">+ Yangi</button><button id="reload-chat" class="small-button" aria-label="Saytni yangilash">↻</button><button id="chat-browser" class="small-button">Brauzerda ↗</button></div></div>
           <div id="upload-banner" class="upload-banner" hidden role="status"><div><strong id="upload-names"></strong><p id="upload-message"></p></div><button id="upload-retry" class="small-button" hidden>Qayta urinish</button><button id="upload-cancel" class="small-button" hidden>Bekor qilish</button><button id="upload-dismiss" class="small-button" hidden>×</button></div>
           <div class="web-container" id="web-container"><div class="web-placeholder"><svg class="mascot" aria-hidden="true"><use href="#pet"/></svg><h3>Tanlangan AI shu yerda ochiladi.</h3><p>Akkauntingizga saytning o‘zida kiring.</p></div></div>
           <div class="web-help">Kirish yoki tekshiruv ochilmasa, <button id="browser-fallback">brauzerda davom eting</button>. Har bir xizmatga birinchi kirish alohida; keyin sessiya saqlanadi.</div>
@@ -105,6 +106,7 @@
       </main>
     </div>
     <footer class="footer"><span><i class="tiny-dot"></i><span id="footer-state">Yordamchingiz shu yerda.</span></span><span><span id="platform-label">Ish stoli uchun · API kalitisiz</span></span></footer>
+    <button id="resize-grip" aria-label="Oyna o‘lchamini o‘zgartirish" title="Oynani kengaytirish uchun suring; klaviaturada strelkalar" class="resize-grip">◢</button>
   </div>
   <div id="toast" class="toast" role="status" hidden></div>
   <script src="app.js"></script>

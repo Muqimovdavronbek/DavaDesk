@@ -1,6 +1,6 @@
 {
   "name": "davadesk",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "private": true,
   "description": "Floating Windows and Linux assistant with 11 AI services",
   "main": "main.cjs",

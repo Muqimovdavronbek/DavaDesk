@@ -51,3 +51,11 @@ test('missing wmctrl is reported rather than silently treated as success',async(
   const error=new Error('missing');error.code='ENOENT';done(error);
  }),{code:'ENOENT'});
 });
+test('resize border and visible popup remain protected after a renderer leave',()=>{
+ const tracker=new AutoCollapse();tracker.hint(false,0);
+ assert.equal(tracker.update({...base,point:{x:902,y:698}},1000),false);
+ assert.equal(tracker.update({...base,point:{x:950,y:750}},1100),false);
+ assert.equal(tracker.update({...base,point:{x:950,y:750}},1700),true);
+ tracker.hint(false,2000);
+ assert.equal(tracker.update({...base,children:[{x:900,y:100,width:200,height:300}]},3000),false);
+});

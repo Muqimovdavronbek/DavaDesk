@@ -10,6 +10,7 @@ const { pathToFileURL } = require('node:url');
 const { spawn } = require('node:child_process');
 const core = require('./lib/core.cjs');
 const desktop = require('./lib/desktop.cjs');
+const {readMedia,pasteKey}=require('./lib/clipboard.cjs');
 const {AutoCollapse,pinLinuxWindow}=require('./lib/window-behavior.cjs');
 const ai = require('./lib/providers.cjs');
 const { attachFiles } = require('./lib/upload.cjs');
@@ -27,6 +28,7 @@ else {
   let shortcutReady = false, quitting = false, taskBusy = false, activeKind = 'task';
   let messages = [], lastAnswer = '', login = { installed: false, authenticated: false };
   let webStatus = 'not-loaded', chatVisible = false;
+  let resizeDrag=null, resizeUntil=0, restoreBounds=null, panelLarge=false, pasteBusy=false;
   let compactBounds, panelBounds, dragStart, leaveTimer, hoverPoll, outsideSince=0, dialogDepth=0, attachments = [];
   async function nativeDialog(method, options) {
     dialogDepth++;
@@ -66,7 +68,7 @@ else {
   }
   function state() {
     return {
-      expanded, tab, settings, workspaceStatus, providers: ai.providers, attachments, upload: upload ? {providerId:upload.providerId,names:upload.names,phase:upload.phase,message:upload.message} : null, uploadBusy:uploadBusy(), taskBusy, activeKind, login, webStatus,
+      expanded, panelLarge, tab, settings, workspaceStatus, providers: ai.providers, attachments, upload: upload ? {providerId:upload.providerId,names:upload.names,phase:upload.phase,message:upload.message} : null, uploadBusy:uploadBusy(), taskBusy, activeKind, login, webStatus,
       shortcutReady, messages: messages.slice(-80), hasAnswer: Boolean(lastAnswer), version: app.getVersion(), platform:process.platform
     };
   }
@@ -98,13 +100,75 @@ else {
   }
   function collapse() {
     clearTimeout(leaveTimer);
-    if (expanded) panelBounds=win.getBounds();
+    if (expanded) {panelBounds=win.getBounds();settings.panelBounds=panelBounds;}
+    resizeDrag=null;
     expanded = false; autoCollapse.reset(); syncChat();
     win.setMinimumSize(88, 96); win.setResizable(false);
     compactBounds=desktop.compact(compactBounds || win.getBounds(),displayArea());
     win.setBounds(compactBounds);
     settings.petBounds=compactBounds; saveSettings();
     allDesktops(); announce();
+  }
+  function rememberPanel() {
+    if(!expanded)return;
+    panelBounds=win.getBounds();settings.panelBounds=panelBounds;saveSettings();
+  }
+  function togglePanelSize() {
+    if(!expanded)showPanel();
+    const area=displayArea();
+    if(!panelLarge){restoreBounds=win.getBounds();win.setBounds({...area});}
+    else win.setBounds(desktop.clamp(restoreBounds||core.windowBounds(area,true),area));
+    panelLarge=!panelLarge;resizeUntil=Date.now()+800;autoCollapse.reset();
+    rememberPanel();send('layout',{});announce();
+  }
+  function resizePoint(value) {
+    if(!value||!Number.isFinite(value.x)||!Number.isFinite(value.y))throw new Error('O‘lcham koordinatasi noto‘g‘ri.');
+    return value;
+  }
+  function resizePanel(value) {
+    if(!resizeDrag)return;
+    const point=resizePoint(value), b=resizeDrag.bounds, area=resizeDrag.area;
+    win.setBounds(desktop.clamp({...b,
+      width:Math.max(Math.min(520,area.width),b.width+point.x-resizeDrag.point.x),
+      height:Math.max(Math.min(420,area.height),b.height+point.y-resizeDrag.point.y)},area));
+    panelLarge=false;resizeUntil=Date.now()+800;autoCollapse.reset();send('layout',{});
+  }
+  async function pasteMedia(media) {
+    if(pasteBusy)throw new Error('Clipboard fayli biriktirilmoqda.');
+    pasteBusy=true;let temporary;
+    try {
+      if(media.files)return await importFiles(media.files);
+      if(!media.png || media.png.length>100*1024*1024)throw new Error('Rasm 100 MB dan oshmasin.');
+      temporary=await fs.promises.mkdtemp(path.join(os.tmpdir(),'davadesk-paste-'));
+      const file=path.join(temporary,'clipboard-'+Date.now()+'.png');
+      await fs.promises.writeFile(file,media.png,{mode:0o600});
+      await importFiles([file]);
+    } finally {pasteBusy=false;if(temporary)await fs.promises.rm(temporary,{recursive:true,force:true});}
+  }
+  function attemptMediaPaste() {
+    const media=readMedia(clipboard);
+    if(!media)return false;
+    void pasteMedia(media).catch(error=>send('notice',{text:error.message}));
+    return true;
+  }
+  function wirePaste(contents,active) {
+    contents.on('before-input-event',(event,input)=>{
+      if(!active() || !pasteKey(input))return;
+      try {if(attemptMediaPaste())event.preventDefault();}
+      catch(error){send('notice',{text:error.message});}
+    });
+    contents.on('context-menu',(_event,params)=>{
+      if(!active())return;
+      const items=[];
+      if(params.selectionText)items.push({label:'Nusxalash',click:()=>contents.copy()});
+      if(params.mediaType==='image')items.push({label:'Rasmni nusxalash',click:()=>contents.copyImageAt(params.x,params.y)});
+      if(params.isEditable)items.push({label:'Kesish',click:()=>contents.cut()},{label:'Qo‘yish (Ctrl+V)',click:()=>{
+        try {if(!attemptMediaPaste()){contents.focus();contents.paste();}}catch(error){send('notice',{text:error.message});}
+      }});
+      if(!items.length)return;
+      dialogDepth++;
+      Menu.buildFromTemplate(items).popup({window:win,callback:()=>{dialogDepth--;autoCollapse.reset();}});
+    });
   }
   function allDesktops() {
     if(!win || win.isDestroyed()) return;
@@ -150,7 +214,7 @@ else {
     // A popup only protects its own area; it no longer disables collapse everywhere.
     // Uploads continue in the background and never block this check.
     if(autoCollapse.update({
-      expanded,visible:win.isVisible(),blocked:Boolean(dragStart||dialogDepth||(!settings.displayName && tab==='home')),
+      expanded,visible:win.isVisible(),blocked:Boolean(dragStart||resizeDrag||Date.now()<resizeUntil||dialogDepth||(!settings.displayName && tab==='home')),
       point:screen.getCursorScreenPoint(),bounds:win.getBounds(),children
     },Date.now())) collapse();
   }
@@ -242,6 +306,7 @@ else {
     secureNavigation(chat.webContents);
     const createdView=chat;
     watchPointer(chat.webContents,()=>expanded && chatVisible && chat===createdView);
+    wirePaste(chat.webContents,()=>expanded && chatVisible && chat===createdView && isService(chat.webContents.getURL()));
     chat.webContents.on('did-create-window', popup => {
       secureNavigation(popup.webContents);
       watchPointer(popup.webContents,()=>expanded && popup.isVisible());
@@ -313,6 +378,23 @@ else {
           const name=core.displayName(payload);
           if(!name)throw new Error('Ismingizni kiriting.');
           settings.displayName=name;saveSettings();break;
+        }
+        case 'panel-size': togglePanelSize(); break;
+        case 'resize-start':
+          if(expanded){resizeDrag={point:resizePoint(payload),bounds:win.getBounds(),area:displayArea()};autoCollapse.reset();}
+          break;
+        case 'resize-move': resizePanel(payload); break;
+        case 'resize-end':
+          if(resizeDrag){resizeDrag=null;resizeUntil=Date.now()+800;autoCollapse.reset();rememberPanel();announce();}
+          break;
+        case 'paste': {
+          if(expanded && tab==='chat' && chat && !ai.serviceURL(chat.webContents.getURL(),settings.provider))
+            throw new Error('Avval AI suhbat sahifasiga kiring.');
+          if(!attemptMediaPaste()) {
+            if(chat && chatVisible){chat.webContents.focus();chat.webContents.paste();}
+            else send('notice',{text:'Avval rasm yoki faylni nusxalang, keyin Ctrl+V bosing.'});
+          }
+          break;
         }
         case 'toggle': expanded ? collapse() : showPanel(); break;
         case 'tab':
@@ -454,6 +536,8 @@ else {
     if(stored?.desktopBehaviorVersion!==13) settings.pinned=true;
     const old=stored?.petBounds;
     const area=screen.getPrimaryDisplay().workArea;
+    if(stored?.panelBounds && ['x','y','width','height'].every(k=>Number.isFinite(stored.panelBounds[k])) && stored.panelBounds.width>=520 && stored.panelBounds.height>=420)
+      panelBounds=desktop.clamp(stored.panelBounds,area);
     compactBounds=desktop.compact(old && ['x','y','width','height'].every(k=>Number.isFinite(old[k])) ? old : {x:area.x+area.width-100,y:area.y+area.height-120},area);
     settings.petBounds=compactBounds;
     fs.mkdirSync(settings.workspace, { recursive: true }); saveSettings();
@@ -478,6 +562,9 @@ else {
     });
     win.setMenu(null);
     watchPointer(win.webContents,()=>expanded);
+    wirePaste(win.webContents,()=>!expanded);
+    win.on('will-resize',()=>{resizeUntil=Date.now()+1000;autoCollapse.reset();});
+    win.on('resized',()=>{resizeUntil=Date.now()+800;rememberPanel();});
     win.on('blur',()=>{if(expanded)pointerHint(false);});
     allDesktops();
     win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
@@ -485,7 +572,7 @@ else {
     win.webContents.on('will-attach-webview', event => event.preventDefault());
     win.on('close', event => { if (!quitting) { event.preventDefault(); collapse(); } });
     win.on('closed', () => { for(const view of chats.values()) if(!view.webContents.isDestroyed()) view.webContents.close(); });
-    win.on('resize', () => { send('layout', {}); allDesktops(); });
+    win.on('resize', () => { if(expanded){resizeUntil=Date.now()+800;autoCollapse.reset();} send('layout', {}); allDesktops(); });
     win.on('show', () => { syncChat(); allDesktops(); announce(); });
     win.on('restore',allDesktops);
     wireIPC();

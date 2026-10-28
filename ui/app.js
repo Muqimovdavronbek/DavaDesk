@@ -28,7 +28,8 @@ function applyState(next) {
   // Status updates must never erase a name the user is currently typing.
   if(document.activeElement!==$('profile-name')) $('profile-name').value=name;
   $('platform-label').textContent=(next.platform==='win32'?'Windows':next.platform==='linux'?'Linux':'Ish stoli')+' uchun · API kalitisiz';
-  $('app-version').textContent='v'+(next.version||'1.5.0');
+  $('panel-size').textContent=next.panelLarge?'❐':'□';
+  $('app-version').textContent='v'+(next.version||'1.6.0');
   const providers=next.providers||[];
   if($('provider').options.length!==providers.length) {
     $('provider').replaceChildren(...providers.map(p=>new Option(p.name,p.id)));
@@ -159,6 +160,24 @@ for(const formId of ['welcome-form','profile-form']) {
   if(result) { $('profile-feedback').textContent='Ismingiz saqlandi.';toast('Ismingiz saqlandi.'); }
  });
 }
+bind('panel-size','panel-size');bind('paste','paste');
+let resizing=false;
+const grip=$('resize-grip');
+const resizePosition=e=>({x:e.screenX,y:e.screenY});
+grip.addEventListener('pointerdown',e=>{
+ if(e.button!==0)return;
+ e.preventDefault();resizing=true;grip.setPointerCapture(e.pointerId);
+ call('resize-start',resizePosition(e));
+});
+grip.addEventListener('pointermove',e=>{if(resizing)call('resize-move',resizePosition(e));});
+function endResize(){if(resizing){resizing=false;call('resize-end');}}
+for(const type of ['pointerup','pointercancel','lostpointercapture'])grip.addEventListener(type,endResize);
+window.addEventListener('blur',endResize);
+grip.addEventListener('keydown',async e=>{
+ const delta={ArrowRight:[40,0],ArrowLeft:[-40,0],ArrowDown:[0,40],ArrowUp:[0,-40]}[e.key];
+ if(!delta)return;e.preventDefault();
+ await call('resize-start',{x:0,y:0});await call('resize-move',{x:delta[0],y:delta[1]});await call('resize-end');
+});
 bind('minimize', 'toggle'); bind('close', 'toggle');
 for (const el of document.querySelectorAll('[data-tab]')) el.addEventListener('click', () => call('tab', el.dataset.tab));
 bind('start-chat', 'tab', 'chat'); bind('start-task', 'tab', 'tasks'); bind('home-connect', 'tab', 'tasks');

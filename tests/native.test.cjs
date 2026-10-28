@@ -9,7 +9,7 @@ const {EventEmitter}=require('node:events');
 const {pathToFileURL}=require('node:url');
 const core=require('../lib/core.cjs');
 
-async function harness(t,{holdUpload=false,firstRun=false,platform='linux'}={}) {
+async function harness(t,{holdUpload=false,firstRun=false,platform='linux',clip=null}={}) {
   let now=0,completeUpload;const intervals=[];
   class Clock extends Date {static now(){return now;}}
   const root=fs.mkdtempSync(path.join(os.tmpdir(),'davadesk-native-'));
@@ -23,6 +23,7 @@ async function harness(t,{holdUpload=false,firstRun=false,platform='linux'}={}) 
   class Contents extends EventEmitter {
     constructor(){super();this.closed=false;}
     send(){}setWindowOpenHandler(fn){this.open=fn;}isDestroyed(){return this.closed;}
+    focus(){}paste(){this.pasted=true;}copy(){}cut(){}copyImageAt(){}
     async loadURL(url){this.url=url;}getURL(){return this.url;}reload(){}close(){this.closed=true;}
   }
   class Window extends EventEmitter {
@@ -42,12 +43,13 @@ async function harness(t,{holdUpload=false,firstRun=false,platform='linux'}={}) 
   const electron={app,BrowserWindow:Window,WebContentsView:View,ipcMain:{handle:(name,fn)=>handlers.set(name,fn)},screen,
     shell:{openExternal:async()=>{},openPath:async()=>''},dialog:{showMessageBox:async()=>({response:0}),showErrorBox:()=>{},showOpenDialog:async()=>({canceled:true})},
     session:{fromPartition:()=>permissionSession},Tray:class{setToolTip(){}setContextMenu(){}on(){}},Menu:{buildFromTemplate:()=>[]},
-    globalShortcut:{register:()=>true,unregisterAll(){}},Notification:class{static isSupported(){return false;}},clipboard:{writeText(){}},nativeImage:{createFromPath:()=>({})}};
+    globalShortcut:{register:()=>true,unregisterAll(){}},Notification:class{static isSupported(){return false;}},clipboard:clip||{writeText(){},availableFormats:()=>[],readImage:()=>({isEmpty:()=>true})},nativeImage:{createFromPath:()=>({})}};
   const appDir=path.resolve(__dirname,'..');
   vm.runInNewContext(fs.readFileSync(path.join(appDir,'main.cjs'),'utf8'),{
     require(name){
       if(name==='electron')return electron;
-      if(name==='node:os')return {homedir:()=>path.join(root,'home')};
+      if(name==='node:os')return {homedir:()=>path.join(root,'home'),tmpdir:()=>root};
+      if(name==='./lib/clipboard.cjs')return require('../lib/clipboard.cjs');
       if(name==='./lib/core.cjs')return core;
       if(name==='./lib/window-behavior.cjs')return require('../lib/window-behavior.cjs');
       if(name==='./lib/desktop.cjs')return require('../lib/desktop.cjs');
@@ -228,4 +230,45 @@ test('Windows autostart targets the portable EXE and reports the native desktop 
  assert(state.workspaceStatus.includes('Win+Tab'));
  await invoke('autostart',false);
  assert.equal(app.loginSettings.openAtLogin,false);
+});
+
+test('resize drag survives leaving the window, persists size and still collapses after release',async t=>{
+ const h=await harness(t);await h.invoke('tab','chat');
+ const b=h.mainWindow.getBounds();
+ await h.invoke('resize-start',{x:100,y:100});
+ await h.invoke('resize-move',{x:180,y:160});
+ h.setCursor({x:2000,y:2000});h.tick(2000);h.tick(4000);
+ assert.equal((await h.invoke('state')).expanded,true);
+ assert.equal(h.mainWindow.getBounds().width,b.width+80);
+ await h.invoke('resize-end');
+ assert.equal(JSON.parse(fs.readFileSync(h.configPath)).panelBounds.width,b.width+80);
+ h.tick(4900);h.tick(5501);assert.equal((await h.invoke('state')).expanded,false);
+ await h.invoke('toggle');assert.equal(h.mainWindow.getBounds().width,b.width+80);
+});
+test('enlarge and restore button keeps the mascot anchor',async t=>{
+ const h=await harness(t);const pet={...h.mainWindow.getBounds()};
+ await h.invoke('tab','chat');const small={...h.mainWindow.getBounds()};
+ await h.invoke('panel-size');assert.equal(h.mainWindow.getBounds().width,1280);
+ await h.invoke('panel-size');assert.deepEqual(h.mainWindow.getBounds(),small);
+ await h.invoke('toggle');assert.equal(h.mainWindow.getBounds().x,pet.x);assert.equal(h.mainWindow.getBounds().y,pet.y);
+});
+test('Ctrl+V imports a copied video once; plain text stays native and auth pages never receive a media import',async t=>{
+ const folder=fs.mkdtempSync(path.join(os.tmpdir(),'dava-clip-test-'));t.after(()=>fs.rmSync(folder,{recursive:true,force:true}));
+ const video=path.join(folder,'test video.mp4');fs.writeFileSync(video,'test-only-video-bytes');
+ let media=true;const clip={availableFormats:()=>media?['x-special/gnome-copied-files']:[],readBuffer:()=>Buffer.from('copy\n'+pathToFileURL(video).href),readImage:()=>({isEmpty:()=>true})};
+ const h=await harness(t,{clip});await h.invoke('tab','chat');const c=h.views[0].webContents;
+ let prevented=0;const key={type:'keyDown',key:'v',control:true};
+ c.emit('before-input-event',{preventDefault(){prevented++;}},key);
+ for(let i=0;i<30&&!h.uploads.length;i++)await new Promise(r=>setTimeout(r,5));
+ assert.equal(prevented,1);assert.equal(h.uploads.length,1);assert.equal(h.uploads[0].files[0].name,'test video.mp4');
+ media=false;c.emit('before-input-event',{preventDefault(){prevented++;}},key);assert.equal(prevented,1);
+ media=true;c.url='https://accounts.google.com/';c.emit('before-input-event',{preventDefault(){prevented++;}},key);assert.equal(prevented,1);assert.equal(h.uploads.length,1);
+});
+test('clipboard screenshot uses a private temporary PNG and preserves text paste fallback',async t=>{
+ let image=true;const clip={availableFormats:()=>[],readImage:()=>({isEmpty:()=>!image,toPNG:()=>Buffer.from('png-test-bytes')})};
+ const h=await harness(t,{clip});await h.invoke('tab','chat');await h.invoke('paste');
+ for(let i=0;i<30&&!h.uploads.length;i++)await new Promise(r=>setTimeout(r,5));
+ assert.equal(h.uploads.length,1);assert.match(h.uploads[0].files[0].name,/clipboard-.*\.png$/);
+ assert.equal(fs.readFileSync(h.uploads[0].files[0].path,'utf8'),'png-test-bytes');
+ image=false;await h.invoke('paste');assert.equal(h.views[0].webContents.pasted,true);
 });

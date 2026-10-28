@@ -83,3 +83,11 @@ test('an uncertain native upload is not retried or falsely reported successful',
   assert.equal(f.calls.filter(c=>c.method==='DOM.setFileInputFiles').length,1);
   assert.equal(f.dbg.isAttached(),false);
 });
+test('copied recordings use video MIME types without bypassing site accept filters',async()=>{
+ for(const name of ['clip.mp4','clip.webm','clip.mov']) {
+  const f=fixture({accept:'video/*'});
+  assert.equal((await attachFiles(f.contents,[file(name)],'chatgpt',{timeoutMs:100,pollMs:1})).phase,'handed-off');
+ }
+ const f=fixture({accept:'image/*'});
+ assert.equal((await attachFiles(f.contents,[file('clip.webm')],'chatgpt',{timeoutMs:12,pollMs:1})).phase,'blocked');
+});

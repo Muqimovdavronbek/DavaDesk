@@ -28,3 +28,8 @@ body[data-busy="true"] .pet-body{animation:working 1.1s ease-in-out infinite}bod
 .name-row{display:flex;gap:10px;margin:10px 0}.name-row input{min-width:0;flex:1;border:1px solid #52695b;background:#101c15;color:#edf7ef;padding:10px;border-radius:7px}
 #profile-form>label{font-size:12px}#profile-feedback{font-size:11px;color:var(--accent)}
 #greeting{color:var(--text)}
+
+/* Keep the grip in the local footer, outside the native AI view. */
+.shell{position:relative}.footer{padding-right:38px}
+.resize-grip{position:absolute;right:3px;bottom:3px;width:30px;height:27px;border:0;border-radius:6px 0 20px 0;background:#233b31;color:#a0f2cf;cursor:nwse-resize;touch-action:none;-webkit-app-region:no-drag;z-index:10}
+.resize-grip:hover,.resize-grip:focus-visible{background:#3b6654}

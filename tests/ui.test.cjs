@@ -28,7 +28,7 @@ async function renderer() {
     querySelector(selector){return this.children.find(x=>selector==='.empty-log'&&x.className==='empty-log')||null;}
     addEventListener(name,fn){(this.listeners[name]??=[]).push(fn);}
     async trigger(name,event={}){for(const fn of this.listeners[name]||[])await fn({target:this,preventDefault(){},...event});}
-    focus(){this.focused=true;}closest(){return null;}getBoundingClientRect(){return{x:185,y:133,width:750,height:510};}
+    setPointerCapture(){}focus(){this.focused=true;}closest(){return null;}getBoundingClientRect(){return{x:185,y:133,width:750,height:510};}
   }
   for(const match of html.matchAll(/<([a-z][a-z0-9-]*)\b([^>]+)>/gi)){
     const el=new Element(match[1],match[2]);all.push(el);if(el.id)ids.set(el.id,el);
@@ -47,7 +47,7 @@ async function renderer() {
     if(action==='task'){initial.taskBusy=true;initial.messages=[{kind:'user',text:payload}];}
     return {...initial,settings:{...initial.settings},messages:[...initial.messages]};
   };
-  const context=vm.createContext({window:{dava:{call:fakeCall,onEvent:fn=>eventListener=fn}},document,
+  const context=vm.createContext({window:{addEventListener(){},dava:{call:fakeCall,onEvent:fn=>eventListener=fn}},document,
     Option:class extends Element{constructor(text,value){super('option');this.textContent=text;this.value=value;}},setTimeout:()=>1,clearTimeout(){},requestAnimationFrame:fn=>fn(),ResizeObserver:class{constructor(fn){this.fn=fn;}observe(){}},console});
   vm.runInContext(fs.readFileSync(path.join(__dirname,'../ui/app.js'),'utf8'),context);
   await new Promise(resolve=>setImmediate(resolve));

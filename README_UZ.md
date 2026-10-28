@@ -1,3 +1,5 @@
+> **1.6.0 source update:** [Oyna va copy/paste tuzatishlari — Linux’da yangilash](docs/UPDATE_1.6.0.md). Avvalgi Release ZIP fayllari 1.5.0 holatida.
+
 # DavaDesk — ish stolingizdagi AI yordamchi
 
 ![DavaDesk](docs/images/cover.webp)

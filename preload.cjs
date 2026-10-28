@@ -1,7 +1,7 @@
 'use strict';
 const { contextBridge, ipcRenderer, webUtils } = require('electron');
 const allowed = new Set([
-  'set-name','upload-retry','upload-cancel','upload-dismiss','pick-ai-files','provider', 'pointer-inside', 'pointer-outside', 'drag-start', 'drag-move', 'drag-end', 'files', 'pick-files', 'remove-file', 'copy-file-path', 'state', 'toggle', 'tab', 'web-bounds', 'browser', 'new-chat', 'reload',
+  'panel-size','resize-start','resize-move','resize-end','paste','set-name','upload-retry','upload-cancel','upload-dismiss','pick-ai-files','provider', 'pointer-inside', 'pointer-outside', 'drag-start', 'drag-move', 'drag-end', 'files', 'pick-files', 'remove-file', 'copy-file-path', 'state', 'toggle', 'tab', 'web-bounds', 'browser', 'new-chat', 'reload',
   'workspace', 'sandbox', 'autostart', 'pin', 'login', 'login-status',
   'task', 'stop', 'copy-answer', 'open-workspace', 'official-app', 'clear-session', 'quit'
 ]);

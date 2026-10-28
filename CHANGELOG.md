@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.6.0
+
+- Add enlarge/restore button, pointer-captured resize grip and persisted panel size.
+- Protect resize borders and in-progress resizing from automatic collapse.
+- Add explicit clipboard image/file paste, keyboard shortcuts and AI context menus.
+- Recognize MP4, WebM, MOV and additional video MIME types without bypassing provider limits.
+- 54 automated tests and renderer interaction checks passed; native OS/live provider validation remains outstanding.
+
 ## 1.5.0
 
 - Windows x64 portable package with Electron and Codex runtimes.
